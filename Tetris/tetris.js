@@ -108,15 +108,18 @@ var checkKey = function(e){
 	reColor()
 	ctx.fillStyle = "rgb(200,0,0)";
 	
-	switch(e.keyCode){
-		case 97 : //a
+	switch(e.which){
+		case 38 : // up arrow
 		fn_Rotate();
 		break;
-		case 46 : //.
+		case 39 : //right arrow
 		fn_right();
 		break;
-		case 44 : //,
+		case 37 : //left arrow
 		fn_left();
+		break;
+		case 40 : //down arrow
+		fn_down();
 		break;
 		case 32 : //space .. drop
 		fn_down();
@@ -234,9 +237,9 @@ var goDown = function(){
 
 
 /********************
-Binding the keyPress Event
+Binding the keydown Event
 *********************/
-$(document).keypress(checkKey);
+$(document).keydown(checkKey);
 
 
 /********************
