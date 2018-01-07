@@ -1,3 +1,5 @@
+margin = 4;
+
 /********************
 This is a function to draw a given pattern with a given color
 *********************/
@@ -19,7 +21,21 @@ var drawPattern = function(color, fillBoxes){
 This is a function to draw a box/elementarySquare , it takes a number from 0-8 :)
 *********************/
 var fill= function(number){
-    ctx.fillRect (initPosX + (squareSize*(number%3)), initPosY + (squareSize * Math.floor(number/3)), squareSize , squareSize);
+	
+	fn_drawBlock(currentPositionX + (squareSize*(number%3)), currentPositionY + (squareSize * Math.floor(number/3)));
+	
+}
+
+var fn_drawBlock = function( x, y ){
+	
+	if(drawStyle){
+		ctx.fillRect (x + margin, y + margin, squareSize - margin*2 , squareSize - margin*2);
+	} else {
+		ctx.beginPath();
+		ctx.arc(x + squareSize/2 , y + squareSize/2, squareSize/2 - margin, 0, Math.PI*2, true); 
+		ctx.closePath();
+		ctx.fill();
+	}
 }
 
 
@@ -31,8 +47,8 @@ var checkForRecolorInit = function( fillBoxes){
 		for(var number=0; number<9;number++){	
 				if ($.inArray(number, fillBoxes) > -1)
 				{
-					var ImageData = ctx.getImageData(initPosX + (squareSize*(number%3)), initPosY + (squareSize * Math.floor(number/3)), squareSize/2 , squareSize/2).data;
-									if ((ImageData[0] != 0) || (ImageData[1] != 0) || (ImageData[2] != 0)){
+					var ImageData = ctx.getImageData(currentPositionX + (squareSize*(number%3)) + squareSize/2, currentPositionY + (squareSize * Math.floor(number/3)) + squareSize/2, 1 , 1).data;
+									if ((ImageData[imageDataRed] != 0) || (ImageData[imageDataGreen] != 0) || (ImageData[imageDataBlue] != 0)){
 										return false;
 										}
 			}

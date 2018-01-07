@@ -28,5 +28,5 @@ var fn_Rotate_buggy = function(){ // code for rotation will come here
 
 
 /*
-ctx.fillRect (initPosX, initPosY, squareSize , squareSize);*/
+ctx.fillRect (currentPositionX, currentPositionY, squareSize , squareSize);*/
 }

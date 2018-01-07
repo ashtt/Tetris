@@ -1,10 +1,19 @@
 /********************
 Some configurations
 *********************/
-var initPosX = 100;
-var initPosY = 100;
+var score = 0;
+var time = 0;
+var beginingPosX = 100
+var beginingPosY = 0
+var currentPositionX = beginingPosX;
+var currentPositionY = beginingPosY;
 var squareSize = 20;
-var isLoggingEnabled = false;
+var isLoggingEnabled = true;
+var speedInMS = 500;
+var difficulity = 0;
+var drawStyle = 1;
+var isPaused = 0;
+var level = 2;
 
 
 /********************
@@ -15,6 +24,19 @@ colorEnum =  [
 	"rgb(0,200,0)", // green
 	"rgb(0,0,200)"  //blue
 ]
+
+var drawStyleEnum = {
+    dots : 0,
+    squares : 1
+}
+
+/*******************
+image data for checking movements (down,right,left)
+********************/
+
+imageDataRed = 0;
+imageDataGreen = 1;
+imageDataBlue = 2;
 
 
 /********************
@@ -58,25 +80,90 @@ for eg. --
 got it ??
 *********************/
 fillBoxes =  [
-	 [1,3,4,5], //smallT
-	 [1,4,6,7,8],  //bigT
-	 [1,4,7],  // I
-	 [1,4,6,7], // J
-	 [1,4,7,8],  // L
-	 //[0,1,3,4],  // O , box
-	 [1,4,5],  // small L
-	 [1,3,4],  // small L
-	 [1,3,4,5,6,7],  // Bomb left
-	 [1,3,4,5,7,8],  // Bomb right
-	 [1,3,4,5,7],  // +
-	 [0,1,2,3,4,6],  // F
-	 [1,3,4,5,6],  // wierd 1
-	 [1,3,4,5,8]  //  wierd 2
-	 
-	 // This pattern halts the game on moving the pattern right. ~infinite loop~
-	 // [0,2,6,8]  //  super-bug
+
+				 [1,4,6,7,8],  //bigT
+				 [1,4,7],  // I
+				 [1,4,6,7], // J
+				 [1,4,7,8],  // L
+				 [1,4,5],  // small L
+				 [1,3,4],  // small L
+				 [1,3,4,5,6,7],  // Bomb left
+				 [1,3,4,5,7,8],  // Bomb right
+				 [1,3,4,5,7],  // +
+				 [0,1,2,3,4,6],  // F
+				 [1,3,4,5,6],  // wierd 1
+				 [1,3,4,5,8]  //  wierd 2
+				 
+				 // This pattern halts the game on moving the pattern right. ~infinite loop~
+				 // [0,2,6,8]  //  super-bug
 	 
 ]
+
+var fn_setFillBoxesAsPerLevel = function(level){
+	
+	saveMyAss("fn_setFillBoxesAsPerLevel - level - " +  level);
+	
+	switch(level){
+		case 1 : 
+			fillBoxes =  [
+
+				 [1,3,4,5], //smallT
+				 [1,4,6,7,8],  //bigT
+				 [1,4,7],  // I
+				 [1,4,6,7], // J
+				 [1,4,7,8],  // L
+				 [0,1,3,4],  // O , box
+				 [1,4,5],  // small L
+				 [1,3,4],  // small L
+				 
+			]
+		break;
+		case 2 : 
+			fillBoxes =  [
+
+				 [1,3,4,5], //smallT
+				 [1,4,6,7,8],  //bigT
+				 [1,4,7],  // I
+				 [1,4,6,7], // J
+				 [1,4,7,8],  // L
+				 [0,1,3,4],  // O , box
+				 [1,4,5],  // small L
+				 [1,3,4],  // small L
+				 [1,3,4,5,6,7],  // Bomb left
+				 [1,3,4,5,7,8],  // Bomb right
+				 [1,3,4,5,7],  // +
+				 [0,1,2,3,4,6],  // F
+				 
+				 // This pattern halts the game on moving the pattern right. ~infinite loop~
+				 // [0,2,6,8]  //  super-bug
+				 
+			]
+		break;
+		case 3 : 
+			fillBoxes =  [
+
+				 [1,4,6,7,8],  //bigT
+				 [1,4,7],  // I
+				 [1,4,6,7], // J
+				 [1,4,7,8],  // L
+				 [1,4,5],  // small L
+				 [1,3,4],  // small L
+				 [1,3,4,5,6,7],  // Bomb left
+				 [1,3,4,5,7,8],  // Bomb right
+				 [1,3,4,5,7],  // +
+				 [0,1,2,3,4,6],  // F
+				 [1,3,4,5,6],  // wierd 1
+				 [1,3,4,5,8]  //  wierd 2
+				 
+				 // This pattern halts the game on moving the pattern right. ~infinite loop~
+				 // [0,2,6,8]  //  super-bug
+				 
+			]
+		break;
+		default :
+		break;
+	}  
+}
 
 /********************
 This starts the game on document.ready
@@ -87,11 +174,12 @@ var handler = function() {
 	if (canv.getContext) {
         ctx = canv.getContext("2d");
 	}
-	
+	fn_setFillBoxesAsPerLevel();
 	currentColor = colorEnum[Math.floor(Math.random()*colorEnum.length)]
 	currentPattern =fillBoxes[Math.floor(Math.random()*fillBoxes.length)];
 	saveMyAss("current pattern is " + currentPattern);
-	refreshIntervalId = setInterval(goDown, 500);
+	refreshIntervalId = setInterval(goDown, speedInMS);
+	timeId = setInterval(fn_updateTime, 10);
 }
 
 /********************
@@ -166,7 +254,7 @@ This moves the pattern right
 var fn_right = function(){
 	if(checkForEndRight()&& checkForMovementRight()){ 
 		clearPrev()
-		initPosX += squareSize;
+		currentPositionX += squareSize;
 		reColor();
 	}
 }
@@ -177,8 +265,91 @@ This moves the pattern left
 var fn_left = function(){
 	if(checkForEndLeft() && checkForMovementLeft()){ 
 		clearPrev()
-		initPosX -= squareSize;
+		currentPositionX -= squareSize;
 		reColor();
+	}
+}
+
+var fn_checkForLine = function(){
+	//var bottomLeftBlockImgData =  ctx.getImageData(0, canv.height - squareSize, squareSize/2 , squareSize/2).datacanv.height
+	var numberOfLinesFilled = 0;
+	var lineFilled = true;
+	for( var blockCordinatesY = canv.height - squareSize ; blockCordinatesY > 0; blockCordinatesY -= squareSize ){
+		for( var blockCordinatesX = 0 ; blockCordinatesX < canv.width; blockCordinatesX += squareSize ){
+			
+			var imageData =  ctx.getImageData( blockCordinatesX + squareSize/2 , blockCordinatesY + squareSize/2 , 1 , 1).data
+			if ((imageData[imageDataRed] == 0) && (imageData[imageDataGreen] == 0) && (imageData[imageDataBlue] == 0)) { // box is not colored
+				lineFilled = false;
+			}		
+		}
+		if(lineFilled){
+			ctx.fillStyle = "rgb(0,0,0)";
+			ctx.strokeStyle = "rgb(0,0,0)";
+			ctx.clearRect (0, blockCordinatesY, canv.width , squareSize);
+			fn_addToScore();
+			numberOfLinesFilled++;
+		}
+		lineFilled = true;
+	}
+	
+	while(numberOfLinesFilled > 0)
+	{
+		fn_shiftUncompletedLinesDown();
+		numberOfLinesFilled--;
+	}
+	
+}
+
+var fn_shiftUncompletedLinesDown = function(){
+	var lineEmpty = true;
+	for( var blockCordinatesY = canv.height - squareSize ; blockCordinatesY > 0; blockCordinatesY -= squareSize ){
+		for( var blockCordinatesX = 0 ; blockCordinatesX < canv.width; blockCordinatesX += squareSize ){
+			
+			var imageData =  ctx.getImageData( blockCordinatesX + squareSize/2 , blockCordinatesY + squareSize/2 , 1 , 1).data
+			if ((imageData[imageDataRed] != 0) || (imageData[imageDataGreen] != 0) || (imageData[imageDataBlue] != 0)) { // box is colored
+				lineEmpty = false;
+			}		
+		}
+		if(lineEmpty){
+				
+				var lineShifted = false;
+				for( var blockCordinatesX = 0 ; blockCordinatesX < canv.width; blockCordinatesX += squareSize ){
+				
+					// check for the line above -- blockCordinatesY - squareSize/2
+					var imageData =  ctx.getImageData( blockCordinatesX + squareSize/2 , blockCordinatesY - squareSize/2 , 1 , 1).data
+					if ((imageData[imageDataRed] != 0) || (imageData[imageDataGreen] != 0) || (imageData[imageDataBlue] != 0)) { // box is colored
+					
+						// this block is coloured, so print the same one line down 
+						ctx.fillStyle = "rgb(" + imageData[imageDataRed] + "," + imageData[imageDataGreen] + "," + imageData[imageDataBlue] + ")";
+						ctx.strokeStyle = "rgb(" + imageData[imageDataRed] + "," + imageData[imageDataGreen] + "," + imageData[imageDataBlue] + ")";
+						
+						fn_drawBlock(blockCordinatesX, blockCordinatesY);
+						// empty this box
+						ctx.clearRect ( blockCordinatesX + margin, blockCordinatesY - squareSize + margin, squareSize - margin , squareSize - margin);
+						lineShifted = true;
+					}		
+				}
+		}
+		lineEmpty = true;
+	}
+}
+
+var fn_addToScore = function(){
+	score++;
+	$('.score').text(score);
+}
+
+var fn_updateTime = function(){
+	if(!isPaused) {
+		time++;
+		var milliSeconds = time%100
+		var seconds =  Math.floor(time/100);
+		var minutes =  Math.floor(seconds/60);
+		$('.time').text(minutes + " : " + seconds%60 + " : " + milliSeconds );
+		
+		//lines per minute
+		var lpm = minutes == 0 ? score: Math.floor(score/minutes);
+		$('.lines-per-minute').text(lpm);
 	}
 }
 
@@ -189,20 +360,20 @@ This is fired either via goDown function in each half a second or by press the S
 var fn_down = function(){
 	if(checkForEndDown() && checkForMovementDown()) { 
 		clearPrev()
-		initPosY += squareSize;
+		currentPositionY += squareSize;
 		reColor();
 		}else{
-		initPosX = 100;
-		initPosY = 100;
+			
+		fn_checkForLine();	
+		currentPositionX = beginingPosX;
+		currentPositionY = beginingPosY;
 		squareSize = squareSize;
 		
 		currentColor = colorEnum[Math.floor(Math.random()*colorEnum.length)]
 		currentPattern =fillBoxes[Math.floor(Math.random()*fillBoxes.length)];
 		if (!checkForRecolorInit(currentPattern)){
-		
-			clearInterval(refreshIntervalId);
-			showGameOver();
-			$(document).unbind('keypress')
+
+			fn_gameOver();
 		}
 	}
 }
@@ -222,7 +393,7 @@ var clearPrev = function(){
 	for(var number=0; number<9;number++){
 		if ($.inArray(number, currentPattern)  > -1 )
 		{
-			ctx.clearRect(initPosX + (squareSize*(number%3)), initPosY + (squareSize * Math.floor(number/3)), squareSize , squareSize);
+			ctx.clearRect(currentPositionX + (squareSize*(number%3)), currentPositionY + (squareSize * Math.floor(number/3)), squareSize , squareSize);
 		}
 	}
 }
@@ -231,8 +402,10 @@ var clearPrev = function(){
 It is fired in every half a second 
 *********************/
 var goDown = function(){
-	reColor();
-	fn_down();
+	if(!isPaused) {
+		reColor();
+		fn_down();
+	}
 }
 
 
@@ -241,6 +414,9 @@ Binding the keydown Event
 *********************/
 $(document).keydown(checkKey);
 
+var getImageDataForABox = function(number){
+	return ctx.getImageData(currentPositionX + (squareSize*(number%3)) + squareSize/2, currentPositionY + (squareSize * Math.floor(number/3)) + squareSize/2, 1 , 1).data;
+}
 
 /********************
 Checks if a pattern can go down or not..
@@ -251,13 +427,12 @@ checkForMovementDown = function(){
 		var number=8;
 		while (number !=0){
 			
-			var imageData = ctx.getImageData(initPosX + (squareSize*(number%3)), initPosY + (squareSize * Math.floor(number/3)), squareSize/2 , squareSize/2).data 
-			//var imageData = ctx.getImageData( initPosX , initPosY + squareSize , 5, 5).data 
-			if ((imageData[0] != 0) || (imageData[1] != 0) || (imageData[2] != 0)) { // box is colored
+			var imageData = getImageDataForABox(number); 
+			if ((imageData[imageDataRed] != 0) || (imageData[imageDataGreen] != 0) || (imageData[imageDataBlue] != 0)) { // box is colored
 						if ($.inArray(number, currentPattern) != -1){ //  belongs
 							
-							var lowerImageData = ctx.getImageData(initPosX + (squareSize*(number%3)), initPosY + (squareSize *(1 +  Math.floor(number/3))), squareSize/2 , squareSize/2).data;
-							if ((lowerImageData[0] != 0) || (lowerImageData[1] != 0) || (lowerImageData[2] != 0)) { // lower box is colored
+							var lowerImageData = ctx.getImageData(currentPositionX + (squareSize*(number%3)) + squareSize/2, currentPositionY + (squareSize *(1 +  Math.floor(number/3))) + squareSize/2,  1, 1).data;
+							if ((lowerImageData[imageDataRed] != 0) || (lowerImageData[imageDataGreen] != 0) || (lowerImageData[imageDataBlue] != 0)) { // lower box is colored
 								return false;
 							}
 							
@@ -290,13 +465,12 @@ checkForMovementLeft = function(){
 		var number=0;
 		while (number < 9){
 			
-			var imageData = ctx.getImageData(initPosX + (squareSize*(number%3)), initPosY + (squareSize * Math.floor(number/3)), squareSize/2 , squareSize/2).data 
-			//var imageData = ctx.getImageData( initPosX , initPosY + squareSize , 5, 5).data 
-			if ((imageData[0] != 0) || (imageData[1] != 0) || (imageData[2] != 0)) { // box is colored
+			var imageData = getImageDataForABox(number)
+			if ((imageData[imageDataRed] != 0) || (imageData[imageDataGreen] != 0) || (imageData[imageDataBlue] != 0)) { // box is colored
 						if ($.inArray(number, currentPattern) != -1){ //  belongs
 							
-							var leftImageData = ctx.getImageData(initPosX + (squareSize*((number%3) -1)), initPosY + (squareSize * Math.floor(number/3)), squareSize/2 , squareSize/2).data;
-							if ((leftImageData[0] != 0) || (leftImageData[1] != 0) || (leftImageData[2] != 0)) { // left box is colored
+							var leftImageData = ctx.getImageData(currentPositionX + (squareSize*((number%3) -1)) + squareSize/2, currentPositionY + (squareSize * Math.floor(number/3)) + squareSize/2, 1 , 1).data;
+							if ((leftImageData[imageDataRed] != 0) || (leftImageData[imageDataGreen] != 0) || (leftImageData[imageDataBlue] != 0)) { // left box is colored
 								return false;
 							}
 							
@@ -334,13 +508,12 @@ checkForMovementRight = function(){
 		var number=2;
 		while (number != 6){
 			
-			var imageData = ctx.getImageData(initPosX + (squareSize*(number%3)), initPosY + (squareSize * Math.floor(number/3)), squareSize/2 , squareSize/2).data 
-			//var imageData = ctx.getImageData( initPosX , initPosY + squareSize , 5, 5).data 
-			if ((imageData[0] != 0) || (imageData[1] != 0) || (imageData[2] != 0)) { // box is colored
+			var imageData = getImageDataForABox(number) 
+			if ((imageData[imageDataRed] != 0) || (imageData[imageDataGreen] != 0) || (imageData[imageDataBlue] != 0)) { // box is colored
 						if ($.inArray(number, currentPattern) != -1){ //  belongs
 							
-							var leftImageData = ctx.getImageData(initPosX + (squareSize*((number%3)  + 1)), initPosY + (squareSize * Math.floor(number/3)), squareSize/2 , squareSize/2).data;
-							if ((leftImageData[0] != 0) || (leftImageData[1] != 0) || (leftImageData[2] != 0)) { // left box is colored
+							var leftImageData = ctx.getImageData(currentPositionX + (squareSize*((number%3)  + 1)) + squareSize/2, currentPositionY + (squareSize * Math.floor(number/3)) + squareSize/2,  1, 1).data;
+							if ((leftImageData[imageDataRed] != 0) || (leftImageData[imageDataGreen] != 0) || (leftImageData[imageDataBlue] != 0)) { // left box is colored
 								return false;
 							}
 							
@@ -370,7 +543,7 @@ var checkForEndDown = function(){
 	var returnFlag = true;
 	for(i=0; i<9;i++){
 		if ($.inArray(i, currentPattern) != -1){ //  belongs
-			returnFlag =  ((initPosY + (squareSize * (Math.floor(i/3) + 1) ) ) < canv.height)
+			returnFlag =  ((currentPositionY + (squareSize * (Math.floor(i/3) + 1) ) ) < canv.height)
 		}
 	}
 	return returnFlag;	
@@ -383,7 +556,7 @@ var checkForEndRight = function(){
 	var returnFlag = true;
 	for(i=0; i<9;i++){
 		if ($.inArray(i, currentPattern) != -1){ //  belongs
-			returnFlag =  ((initPosX + (squareSize * (Math.floor(i%3) + 1) ) ) < canv.width)
+			returnFlag =  ((currentPositionX + (squareSize * (Math.floor(i%3) + 1) ) ) < canv.width)
 			if(!returnFlag) 
 			return returnFlag;
 		}
@@ -398,7 +571,7 @@ var checkForEndLeft = function(){
 	var returnFlag = true;
 		for(i=0; i<9;i++){
 			if ($.inArray(i, currentPattern) != -1){ //  belongs
-				returnFlag =  ((initPosX + (squareSize * Math.floor(i%3) ) ) > 0);
+				returnFlag =  ((currentPositionX + (squareSize * Math.floor(i%3) ) ) > 0);
 				if(!returnFlag) 
 			return returnFlag;
 			}
